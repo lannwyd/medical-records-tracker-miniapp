@@ -1,6 +1,6 @@
 const ClientListItem = () => {
     return (
-        <div className=" grid grid-cols-8 gap-3 items-center border-border/40 border-b py-3 px-2 text-xs text-text text-right hover:bg-white/5 transition-colors min-h-[50px]">
+        <div className=" grid grid-cols-8 gap-3 items-center border-border/40 border-b py-3 px-2 text-xs text-text text-right hover:bg-white/5 transition-colors min-h-12.5">
             <p className="whitespace-nowrap ">24/07/2026</p>
             <p className="font-medium leading-snug wrap-break-word">
                 مشري فاروق محمد الفاتح
