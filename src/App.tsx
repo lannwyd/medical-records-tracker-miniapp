@@ -7,7 +7,7 @@ import MainLayout from "./layout/MainLayout";
 
 function App() {
   return (
-      <main className="min-h-screen w-full font-rubik bg-bg">
+      <main className="h-screen w-full font-rubik bg-bg overflow-hidden p-3 ">
         <MainLayout/>
       </main>
   );
