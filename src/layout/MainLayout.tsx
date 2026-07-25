@@ -11,7 +11,7 @@ const MainLayout = () => {
 
             <div className="w-full h-[90%] flex flex-row gap-3 rounded-xl ">
                 <ClientsList/>
-                <ClientDrawer state : open/>
+                <ClientDrawer />
             </div>
         </div >
     )
