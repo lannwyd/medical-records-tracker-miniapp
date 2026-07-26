@@ -9,7 +9,7 @@ const MainLayout = () => {
         <div className="w-full h-full flex flex-col  gap-3 min-h-0  ">
             <SearchBar />
 
-            <div className="w-full h-[90%] flex flex-row gap-3 rounded-xl ">
+            <div className="w-full h-[90%] flex flex-row gap-1 rounded-xl ">
                 <ClientsList/>
                 <ClientDrawer />
             </div>
