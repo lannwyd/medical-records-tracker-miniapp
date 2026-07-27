@@ -5,7 +5,6 @@ export interface RecordRow {
     client_name: string;
     client_adr: string;
     med_name: string;
-    med_form: string | null;
     quantity: number;
     doctor_name: string;
     doctor_adr: string;

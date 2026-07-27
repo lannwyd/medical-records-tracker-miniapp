@@ -16,7 +16,7 @@ const ClientListItem = ({ record, onDelete, onEdit, onDuplicate, onSelect, isSel
     return (
         <div
             onClick={() => onSelect(record)}
-            className={`flex-2 grid grid-cols-9 gap-3 items-center hover:cursor-pointer border-border/40 border-b py-3 px-2 text-xs text-text text-right hover:bg-indigo-100 transition-colors duration-500 ease-in-out min-h-12.5 relative ${hasNotes ? "border-r-4 border-r-amber-400" : ""
+            className={`flex-2 grid grid-cols-8 gap-3 items-center hover:cursor-pointer border-border/40 border-b py-3 px-2 text-xs text-text text-right hover:bg-indigo-100 transition-colors duration-500 ease-in-out min-h-12.5 relative ${hasNotes ? "border-r-4 border-r-amber-400" : ""
                 } ${isSelected ? "bg-indigo-100" : ""}`}
         >
             <p className="whitespace-nowrap">{record.date}</p>
@@ -26,7 +26,6 @@ const ClientListItem = ({ record, onDelete, onEdit, onDuplicate, onSelect, isSel
             <p dir="ltr" className="whitespace-nowrap">{record.quantity}</p>
             <p className="font-medium leading-snug wrap-break-word">{record.doctor_name}</p>
             <p className="wrap-break-word">{record.doctor_adr}</p>
-            <p className="  font-medium wrap-break-word">{record.med_form ?? "—"}</p>
             <div className="flex flex-row gap-2">
                 <X
                     size={24}

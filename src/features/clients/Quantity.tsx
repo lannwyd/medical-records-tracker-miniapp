@@ -6,9 +6,6 @@ export const Quantity = ({ record }: { record: RecordRow }) => {
             <div className=" flex flex-row gap-3 items-center ">
                 <p className="font-bold text-sm  text-indigo-700">الكمية : {record.quantity}</p>
             </div>
-            <div className=" flex flex-row gap-3 items-center ">
-                <p className="font-bold text-sm  text-indigo-700">الصيغة : {record.med_form ?? "—"}</p>
-            </div>
         </div>
     )
 }

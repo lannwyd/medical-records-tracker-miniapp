@@ -20,7 +20,6 @@ export const useAddRecord = (
     const [doctorAdr, setDoctorAdr] = useState("");
     const [notes, setNotes] = useState("");
     const [medName, setMedName] = useState("");
-    const [medForm, setMedForm] = useState("");
     const [quantity, setQuantity] = useState(1);
 
     useEffect(() => {
@@ -32,7 +31,6 @@ export const useAddRecord = (
             setDoctorAdr(initialData.doctor_adr ?? "");
             setNotes(initialData.notes ?? "");
             setMedName(initialData.med_name);
-            setMedForm(initialData.med_form ?? "");
             setQuantity(initialData.quantity);
         } else {
             resetForm();
@@ -48,7 +46,6 @@ export const useAddRecord = (
         setDoctorAdr("");
         setNotes("");
         setMedName("");
-        setMedForm("");
         setQuantity(1);
         setErrors({});
     };
@@ -64,7 +61,6 @@ export const useAddRecord = (
             doctor_adr: doctorAdr,
             notes,
             med_name: medName,
-            med_form: medForm,
             quantity,
         };
 
@@ -100,8 +96,8 @@ export const useAddRecord = (
     };
 
     return {
-        state: { clientName, clientAdr, date, doctorName, doctorAdr, notes, medName, medForm, quantity },
-        setters: { setClientName, setClientAdr, setDate, setDoctorName, setDoctorAdr, setNotes, setMedName, setMedForm, setQuantity },
+        state: { clientName, clientAdr, date, doctorName, doctorAdr, notes, medName, quantity },
+        setters: { setClientName, setClientAdr, setDate, setDoctorName, setDoctorAdr, setNotes, setMedName, setQuantity },
         loading,
         errors,
         submitForm,

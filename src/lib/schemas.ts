@@ -15,7 +15,6 @@ export const clientFormSchema = z.object({
     doctor_adr: z.string().optional(),
     notes: z.string().optional(),
     med_name: z.string().min(1, "اسم الدواء مطلوب"),
-    med_form: z.string().optional(),
     quantity: z.coerce.number().min(1, "الكمية يجب أن تكون 1 على الأقل"),
 });
 export type ClientFormData = z.infer<typeof clientFormSchema>;

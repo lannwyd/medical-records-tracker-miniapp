@@ -39,7 +39,6 @@ const SearchBar = ({
         if (formTarget) setDialogOpen(true);
     }, [formTarget]);
 
-    // autofocus the first field whenever the dialog opens
     useEffect(() => {
         if (dialogOpen) {
             const timer = setTimeout(() => firstFieldRef.current?.focus(), 0);
@@ -121,7 +120,7 @@ const SearchBar = ({
                     type="text"
                     name="client"
                     id="client-input"
-                    placeholder="...اسم المريض"
+                    placeholder="اسم المريض . . ."
                     value={searchQuery}
                     onChange={(e) => onSearchQueryChange(e.target.value)}
                     className="bg-surface rounded-lg p-1.5"
@@ -197,7 +196,7 @@ const SearchBar = ({
                     </div>
 
                     <div>
-                        <label className="text-sm text-text/70">العنوان</label>
+                        <label className="text-sm text-text/70">العنوان*</label>
                         <input
                             value={state.clientAdr}
                             onChange={(e) => setters.setClientAdr(e.target.value)}
@@ -219,7 +218,7 @@ const SearchBar = ({
                     </div>
 
                     <div>
-                        <label className="text-sm text-text/70">الطبيب</label>
+                        <label className="text-sm text-text/70">الطبيب*</label>
                         <input
                             value={state.doctorName}
                             onChange={(e) => setters.setDoctorName(e.target.value)}
@@ -228,7 +227,7 @@ const SearchBar = ({
                     </div>
 
                     <div>
-                        <label className="text-sm text-text/70">عنوان الطبيب</label>
+                        <label className="text-sm text-text/70">عنوان الطبيب*</label>
                         <input
                             value={state.doctorAdr}
                             onChange={(e) => setters.setDoctorAdr(e.target.value)}
@@ -237,7 +236,7 @@ const SearchBar = ({
                     </div>
 
                     <div>
-                        <label className="text-sm text-text/70">ملاحظات</label>
+                        <label className="text-sm text-text/70">ملاحظات*</label>
                         <textarea
                             rows={2}
                             value={state.notes}
@@ -254,25 +253,19 @@ const SearchBar = ({
                             <p className="text-red-500 text-xs mb-2">{errors.med_name}</p>
                         )}
 
-                        <div className="grid grid-cols-7 gap-2 items-center">
+                        <div className="grid grid-cols-5  gap-2 items-center">
                             <input
                                 placeholder="اسم الدواء"
                                 value={state.medName}
                                 onChange={(e) => setters.setMedName(e.target.value)}
                                 className="col-span-3 border border-border/40 rounded-lg p-2 text-sm"
                             />
+                            <label htmlFor="" className="col-span-1 text-left rounded-lg p-2 text-sm">الكمية*</label>
                             <input
-                                placeholder="الصيغة"
-                                value={state.medForm}
-                                onChange={(e) => setters.setMedForm(e.target.value)}
-                                className="col-span-2 border border-border/40 rounded-lg p-2 text-sm"
-                            />
-                            <input
-                                placeholder="الكمية"
                                 type="number"
                                 value={state.quantity}
                                 onChange={(e) => setters.setQuantity(parseInt(e.target.value) || 0)}
-                                className="col-span-2 border border-border/40 rounded-lg p-2 text-sm"
+                                className="col-span-1 border border-border/40 rounded-lg p-2 text-sm"
                             />
                         </div>
                     </div>

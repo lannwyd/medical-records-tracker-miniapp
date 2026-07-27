@@ -17,15 +17,14 @@ const ClientsList = ({ records, loading, error, onDelete, onEdit, onDuplicate, o
     if (error) return <p className="p-4 text-red-600">{error}</p>;
     return (
         <section className="min-w-[66%] w-[66%] overflow-auto custom-y-scrollbar bg-panel border-border/40 border shadow-lg/10 shadow-shadow rounded-xl p-2 font-rubik">
-            <div className="grid grid-cols-9 gap-2 h-8 items-center border-border/40 border-b px-2 text-xs font-semibold text-text/70 text-right">
+            <div className="grid grid-cols-8 gap-2 h-8 items-center border-border/40 border-b px-2 text-xs font-semibold text-text/70 text-right">
                 <p>تاريخ</p>
                 <p>اسم المريض</p>
-                <p>العنوان</p>
+                <p>عنوان المريض</p>
                 <p>الدواء</p>
                 <p>الكمية</p>
                 <p>الطبيب</p>
-                <p>العنوان</p>
-                <p>الصيغة</p>
+                <p>عنوان الطبيب</p>
             </div>
 
             <div className="w-full flex flex-col gap-1 mt-1 ">

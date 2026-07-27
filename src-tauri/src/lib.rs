@@ -12,18 +12,10 @@ pub struct RecordRow {
     pub client_name: String,
     pub client_adr: String,
     pub med_name: String,
-    pub med_form: Option<String>,
     pub quantity: i64,
     pub doctor_name: String,
     pub doctor_adr: String,
     pub notes: Option<String>,
-}
-
-#[derive(Deserialize)]
-pub struct MedicationInput {
-    pub name: String,
-    pub form: Option<String>,
-    pub quantity: i64,
 }
 
 #[derive(Deserialize)]
@@ -35,7 +27,6 @@ pub struct AddRecordInput {
     pub doctor_adr: Option<String>,
     pub notes: Option<String>,
     pub med_name: String,
-    pub med_form: Option<String>,
     pub quantity: i64,
 }
 
@@ -71,7 +62,6 @@ fn init_db(app_handle: &tauri::AppHandle) -> Connection {
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
             record_id    INTEGER NOT NULL,
             name         TEXT NOT NULL,
-            form         TEXT,
             quantity     INTEGER NOT NULL,
             FOREIGN KEY (record_id) REFERENCES records(id) ON DELETE CASCADE
         );
@@ -89,34 +79,33 @@ fn get_records(state: tauri::State<DbConnection>) -> Result<Vec<RecordRow>, Stri
     let conn = state.0.lock().map_err(|e| e.to_string())?;
 
     let mut stmt = conn
-    .prepare(
-        "
-SELECT m.id, r.id, r.date, c.name, c.adr, m.name, m.form, m.quantity, r.doctor_name, r.doctor_adr, r.notes
+        .prepare(
+            "
+SELECT m.id, r.id, r.date, c.name, c.adr, m.name, m.quantity, r.doctor_name, r.doctor_adr, r.notes
 FROM records r
 JOIN clients c ON c.id = r.client_id
 JOIN medications m ON m.record_id = r.id
 ORDER BY r.date DESC
 ",
-    )
-    .map_err(|e| e.to_string())?;
+        )
+        .map_err(|e| e.to_string())?;
 
-let rows = stmt
-    .query_map([], |row| {
-        Ok(RecordRow {
-            medication_id: row.get(0)?,
-            record_id: row.get(1)?,
-            date: row.get(2)?,
-            client_name: row.get(3)?,
-            client_adr: row.get(4)?,
-            med_name: row.get(5)?,
-            med_form: row.get(6)?,
-            quantity: row.get(7)?,
-            doctor_name: row.get(8)?,
-            doctor_adr: row.get(9)?,
-            notes: row.get(10)?,
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(RecordRow {
+                medication_id: row.get(0)?,
+                record_id: row.get(1)?,
+                date: row.get(2)?,
+                client_name: row.get(3)?,
+                client_adr: row.get(4)?,
+                med_name: row.get(5)?,
+                quantity: row.get(6)?,
+                doctor_name: row.get(7)?,
+                doctor_adr: row.get(8)?,
+                notes: row.get(9)?,
+            })
         })
-    })
-    .map_err(|e| e.to_string())?;
+        .map_err(|e| e.to_string())?;
 
     let result: Result<Vec<RecordRow>, _> = rows.collect();
     result.map_err(|e| e.to_string())
@@ -149,8 +138,8 @@ fn add_record(payload: AddRecordInput, state: tauri::State<DbConnection>) -> Res
     let record_id = tx.last_insert_rowid();
 
     tx.execute(
-        "INSERT INTO medications (record_id, name, form, quantity) VALUES (?1, ?2, ?3, ?4)",
-        params![record_id, payload.med_name, payload.med_form, payload.quantity],
+        "INSERT INTO medications (record_id, name, quantity) VALUES (?1, ?2, ?3)",
+        params![record_id, payload.med_name, payload.quantity],
     )
     .map_err(|e| e.to_string())?;
 
@@ -176,7 +165,6 @@ pub struct UpdateRecordInput {
     pub doctor_adr: Option<String>,
     pub notes: Option<String>,
     pub med_name: String,
-    pub med_form: Option<String>,
     pub quantity: i64,
 }
 
@@ -212,8 +200,8 @@ fn update_record(payload: UpdateRecordInput, state: tauri::State<DbConnection>) 
     .map_err(|e| e.to_string())?;
 
     tx.execute(
-        "UPDATE medications SET name = ?1, form = ?2, quantity = ?3 WHERE record_id = ?4",
-        params![payload.med_name, payload.med_form, payload.quantity, payload.record_id],
+        "UPDATE medications SET name = ?1, quantity = ?2 WHERE record_id = ?3",
+        params![payload.med_name, payload.quantity, payload.record_id],
     )
     .map_err(|e| e.to_string())?;
 
@@ -226,11 +214,10 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            // Pass app.handle() to init_db so it can resolve paths safely
             app.manage(DbConnection(Mutex::new(init_db(app.handle()))));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_records, add_record, delete_record,update_record])
+        .invoke_handler(tauri::generate_handler![get_records, add_record, delete_record, update_record])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
