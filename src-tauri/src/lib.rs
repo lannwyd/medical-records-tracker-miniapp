@@ -34,7 +34,9 @@ pub struct AddRecordInput {
     pub doctor_name: Option<String>,
     pub doctor_adr: Option<String>,
     pub notes: Option<String>,
-    pub medications: Vec<MedicationInput>,
+    pub med_name: String,
+    pub med_form: Option<String>,
+    pub quantity: i64,
 }
 
 struct DbConnection(Mutex<Connection>);
@@ -146,13 +148,11 @@ fn add_record(payload: AddRecordInput, state: tauri::State<DbConnection>) -> Res
     .map_err(|e| e.to_string())?;
     let record_id = tx.last_insert_rowid();
 
-    for med in payload.medications {
-        tx.execute(
-            "INSERT INTO medications (record_id, name, form, quantity) VALUES (?1, ?2, ?3, ?4)",
-            params![record_id, med.name, med.form, med.quantity],
-        )
-        .map_err(|e| e.to_string())?;
-    }
+    tx.execute(
+        "INSERT INTO medications (record_id, name, form, quantity) VALUES (?1, ?2, ?3, ?4)",
+        params![record_id, payload.med_name, payload.med_form, payload.quantity],
+    )
+    .map_err(|e| e.to_string())?;
 
     tx.commit().map_err(|e| e.to_string())?;
     Ok(())
@@ -166,6 +166,61 @@ fn delete_record(record_id: i64, state: tauri::State<DbConnection>) -> Result<()
     Ok(())
 }
 
+#[derive(Deserialize)]
+pub struct UpdateRecordInput {
+    pub record_id: i64,
+    pub client_name: String,
+    pub client_adr: Option<String>,
+    pub date: String,
+    pub doctor_name: Option<String>,
+    pub doctor_adr: Option<String>,
+    pub notes: Option<String>,
+    pub med_name: String,
+    pub med_form: Option<String>,
+    pub quantity: i64,
+}
+
+#[tauri::command]
+fn update_record(payload: UpdateRecordInput, state: tauri::State<DbConnection>) -> Result<(), String> {
+    let mut conn = state.0.lock().map_err(|e| e.to_string())?;
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+
+    let client_id: i64 = tx
+        .query_row(
+            "SELECT client_id FROM records WHERE id = ?1",
+            params![payload.record_id],
+            |row| row.get(0),
+        )
+        .map_err(|e| e.to_string())?;
+
+    tx.execute(
+        "UPDATE clients SET name = ?1, adr = ?2 WHERE id = ?3",
+        params![payload.client_name, payload.client_adr, client_id],
+    )
+    .map_err(|e| e.to_string())?;
+
+    tx.execute(
+        "UPDATE records SET date = ?1, doctor_name = ?2, doctor_adr = ?3, notes = ?4 WHERE id = ?5",
+        params![
+            payload.date,
+            payload.doctor_name,
+            payload.doctor_adr,
+            payload.notes,
+            payload.record_id
+        ],
+    )
+    .map_err(|e| e.to_string())?;
+
+    tx.execute(
+        "UPDATE medications SET name = ?1, form = ?2, quantity = ?3 WHERE record_id = ?4",
+        params![payload.med_name, payload.med_form, payload.quantity, payload.record_id],
+    )
+    .map_err(|e| e.to_string())?;
+
+    tx.commit().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -175,7 +230,7 @@ pub fn run() {
             app.manage(DbConnection(Mutex::new(init_db(app.handle()))));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_records, add_record, delete_record])
+        .invoke_handler(tauri::generate_handler![get_records, add_record, delete_record,update_record])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

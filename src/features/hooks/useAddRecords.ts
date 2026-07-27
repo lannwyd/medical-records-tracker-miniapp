@@ -1,7 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { clientFormSchema, ClientFormData } from "../../lib/schemas";
-export const useAddRecord = (onSuccess?: () => void) => {
+import { RecordRow } from "../types";
+
+type Mode = "add" | "edit" | "duplicate";
+
+export const useAddRecord = (
+    onSuccess?: () => void,
+    initialData?: RecordRow | null,
+    mode: Mode = "add"
+) => {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -11,29 +19,26 @@ export const useAddRecord = (onSuccess?: () => void) => {
     const [doctorName, setDoctorName] = useState("");
     const [doctorAdr, setDoctorAdr] = useState("");
     const [notes, setNotes] = useState("");
-    const [medications, setMedications] = useState([
-        { name: "", form: "", quantity: 1 },
-    ]);
+    const [medName, setMedName] = useState("");
+    const [medForm, setMedForm] = useState("");
+    const [quantity, setQuantity] = useState(1);
 
-    const addMedicationRow = () => {
-        setMedications([...medications, { name: "", form: "", quantity: 1 }]);
-    };
-
-    const removeMedicationRow = (index: number) => {
-        if (medications.length > 1) {
-            setMedications(medications.filter((_, i) => i !== index));
+    useEffect(() => {
+        if (initialData) {
+            setClientName(initialData.client_name);
+            setClientAdr(initialData.client_adr ?? "");
+            setDate(initialData.date);
+            setDoctorName(initialData.doctor_name ?? "");
+            setDoctorAdr(initialData.doctor_adr ?? "");
+            setNotes(initialData.notes ?? "");
+            setMedName(initialData.med_name);
+            setMedForm(initialData.med_form ?? "");
+            setQuantity(initialData.quantity);
+        } else {
+            resetForm();
         }
-    };
-
-    const updateMedication = (
-        index: number,
-        field: "name" | "form" | "quantity",
-        value: string | number
-    ) => {
-        const updated = [...medications];
-        updated[index] = { ...updated[index], [field]: value };
-        setMedications(updated);
-    };
+        setErrors({});
+    }, [initialData]);
 
     const resetForm = () => {
         setClientName("");
@@ -42,7 +47,9 @@ export const useAddRecord = (onSuccess?: () => void) => {
         setDoctorName("");
         setDoctorAdr("");
         setNotes("");
-        setMedications([{ name: "", form: "", quantity: 1 }]);
+        setMedName("");
+        setMedForm("");
+        setQuantity(1);
         setErrors({});
     };
 
@@ -56,7 +63,9 @@ export const useAddRecord = (onSuccess?: () => void) => {
             doctor_name: doctorName,
             doctor_adr: doctorAdr,
             notes,
-            medications,
+            med_name: medName,
+            med_form: medForm,
+            quantity,
         };
 
         const result = clientFormSchema.safeParse(rawData);
@@ -71,12 +80,18 @@ export const useAddRecord = (onSuccess?: () => void) => {
 
         try {
             setLoading(true);
-            await invoke("add_record", { payload: result.data });
+            if (mode === "edit" && initialData) {
+                await invoke("update_record", {
+                    payload: { ...result.data, record_id: initialData.record_id },
+                });
+            } else {
+                await invoke("add_record", { payload: result.data });
+            }
             resetForm();
             if (onSuccess) onSuccess();
             return true;
         } catch (err) {
-            console.error("Failed to add record:", err);
+            console.error("Failed to save record:", err);
             setErrors({ submit: String(err) });
             return false;
         } finally {
@@ -85,9 +100,8 @@ export const useAddRecord = (onSuccess?: () => void) => {
     };
 
     return {
-        state: { clientName, clientAdr, date, doctorName, doctorAdr, notes, medications },
-        setters: { setClientName, setClientAdr, setDate, setDoctorName, setDoctorAdr, setNotes },
-        medicationActions: { addMedicationRow, removeMedicationRow, updateMedication },
+        state: { clientName, clientAdr, date, doctorName, doctorAdr, notes, medName, medForm, quantity },
+        setters: { setClientName, setClientAdr, setDate, setDoctorName, setDoctorAdr, setNotes, setMedName, setMedForm, setQuantity },
         loading,
         errors,
         submitForm,

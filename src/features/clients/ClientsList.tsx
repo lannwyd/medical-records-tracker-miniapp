@@ -1,5 +1,3 @@
-
-
 import ClientListItem from "./ClientListItem"
 import { RecordRow } from "../types";
 
@@ -8,10 +6,11 @@ interface ClientsListProps {
     loading: boolean;
     error: string | null;
     onDelete: (record_id: number) => void;
+    onEdit: (record: RecordRow) => void;
+    onDuplicate: (record: RecordRow) => void;
 }
 
-const ClientsList = ({ records, loading, error, onDelete }: ClientsListProps) => {
-
+const ClientsList = ({ records, loading, error, onDelete, onEdit, onDuplicate }: ClientsListProps) => {
     if (loading) return <p className="p-4 text-text/60">جار التحميل...</p>;
     if (error) return <p className="p-4 text-red-600">{error}</p>;
     return (
@@ -32,7 +31,13 @@ const ClientsList = ({ records, loading, error, onDelete }: ClientsListProps) =>
                     <p className="p-4 text-center text-text/50">لا توجد سجلات</p>
                 )}
                 {records.map((record) => (
-                    <ClientListItem key={record.medication_id} record={record} onDelete={onDelete} />
+                    <ClientListItem
+                        key={record.medication_id}
+                        record={record}
+                        onDelete={onDelete}
+                        onEdit={onEdit}
+                        onDuplicate={onDuplicate}
+                    />
                 ))}
             </div>
         </section>

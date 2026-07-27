@@ -4,9 +4,11 @@ import { RecordRow } from "../types";
 interface ClientListItemProps {
     record: RecordRow;
     onDelete: (record_id: number) => void;
+    onEdit: (record: RecordRow) => void;
+    onDuplicate: (record: RecordRow) => void;
 }
 
-const ClientListItem = ({ record, onDelete }: ClientListItemProps) => {
+const ClientListItem = ({ record, onDelete, onEdit, onDuplicate }: ClientListItemProps) => {
     return (
         <div className="grid grid-cols-9 gap-3 items-center border-border/40 border-b py-3 px-2 text-xs text-text text-right hover:bg-white/5 transition-colors min-h-12.5">
             <p className="whitespace-nowrap">{record.date}</p>
@@ -23,8 +25,16 @@ const ClientListItem = ({ record, onDelete }: ClientListItemProps) => {
                     onClick={() => onDelete(record.record_id)}
                     className="text-red-600 hover:text-red-900 hover:cursor-pointer"
                 />
-                <SquarePen size={24} className="text-indigo-600 hover:text-indigo-900 hover:cursor-pointer" />
-                <Copy size={24} className="text-slate-600 hover:text-slate-900 hover:cursor-pointer" />
+                <SquarePen
+                    size={24}
+                    onClick={() => onEdit(record)}
+                    className="text-indigo-600 hover:text-indigo-900 hover:cursor-pointer"
+                />
+                <Copy
+                    size={24}
+                    onClick={() => onDuplicate(record)}
+                    className="text-slate-600 hover:text-slate-900 hover:cursor-pointer"
+                />
             </div>
         </div>
     );
