@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ClientFormDialog from "./Dialog";
 import { useAddRecord } from "../hooks/useAddRecords";
 import { RecordRow } from "../types";
@@ -7,14 +7,60 @@ interface SearchBarProps {
     onRecordAdded?: () => void;
     formTarget: { mode: "add" | "edit" | "duplicate"; record: RecordRow | null } | null;
     onFormTargetChange: (target: { mode: "add" | "edit" | "duplicate"; record: RecordRow | null } | null) => void;
+    searchQuery: string;
+    onSearchQueryChange: (value: string) => void;
+    dateFrom: string;
+    onDateFromChange: (value: string) => void;
+    dateTo: string;
+    onDateToChange: (value: string) => void;
+    hasNotesOnly: boolean;
+    onHasNotesOnlyChange: (value: boolean) => void;
 }
 
-const SearchBar = ({ onRecordAdded, formTarget, onFormTargetChange }: SearchBarProps) => {
+const SearchBar = ({
+    onRecordAdded,
+    formTarget,
+    onFormTargetChange,
+    searchQuery,
+    onSearchQueryChange,
+    dateFrom,
+    onDateFromChange,
+    dateTo,
+    onDateToChange,
+    hasNotesOnly,
+    onHasNotesOnlyChange,
+}: SearchBarProps) => {
     const [dialogOpen, setDialogOpen] = useState(false);
+    const searchInputRef = useRef<HTMLInputElement>(null);
+    const formRef = useRef<HTMLFormElement>(null);
+    const firstFieldRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (formTarget) setDialogOpen(true);
     }, [formTarget]);
+
+    // autofocus the first field whenever the dialog opens
+    useEffect(() => {
+        if (dialogOpen) {
+            const timer = setTimeout(() => firstFieldRef.current?.focus(), 0);
+            return () => clearTimeout(timer);
+        }
+    }, [dialogOpen]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key !== "Enter") return;
+            if (dialogOpen) return;
+            const active = document.activeElement;
+            const isTyping = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement;
+            if (isTyping) return;
+            e.preventDefault();
+            searchInputRef.current?.focus();
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [dialogOpen]);
 
     const mode = formTarget?.mode ?? "add";
     const initialData = mode === "edit" || mode === "duplicate" ? formTarget?.record : null;
@@ -45,19 +91,73 @@ const SearchBar = ({ onRecordAdded, formTarget, onFormTargetChange }: SearchBarP
         if (!open) onFormTargetChange(null);
     };
 
+    // Enter moves focus to the next field instead of submitting,
+    // except inside textarea (keep newline behavior) and on the submit button itself
+    const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+        if (e.key !== "Enter") return;
+        const target = e.target as HTMLElement;
+
+        if (target.tagName === "TEXTAREA") return;
+        if (target instanceof HTMLButtonElement && target.type === "submit") return;
+
+        e.preventDefault();
+
+        const focusable = Array.from(
+            formRef.current?.querySelectorAll<HTMLElement>("input, textarea, select, button[type='submit']") ?? []
+        );
+        const currentIndex = focusable.indexOf(target);
+        const next = focusable[currentIndex + 1];
+        next?.focus();
+    };
+
     const titles = { add: "إضافة مريض", edit: "تعديل السجل", duplicate: "نسخ السجل" };
 
     return (
-        <section className="w-full min-h-16 flex flex-row justify-between items-center bg-panel border-border/40 border shadow-lg/10 shadow-shadow rounded-xl px-4">
+        <section className="w-full min-h-16 flex flex-row justify-between items-center bg-panel border-border/40 border shadow-lg/10 shadow-shadow rounded-xl px-4 gap-4">
             <div className="flex flex-row gap-4 items-center justify-center">
                 <label htmlFor="client">البحث عن المريض :</label>
                 <input
+                    ref={searchInputRef}
                     type="text"
                     name="client"
                     id="client-input"
-                    placeholder="اسم المريض"
+                    placeholder="...اسم المريض"
+                    value={searchQuery}
+                    onChange={(e) => onSearchQueryChange(e.target.value)}
                     className="bg-surface rounded-lg p-1.5"
                 />
+            </div>
+
+            <div className="flex flex-row gap-3 items-center text-sm">
+                <div className="flex flex-row gap-1 items-center">
+                    <label htmlFor="date-from" className="text-text/70">من:</label>
+                    <input
+                        type="date"
+                        id="date-from"
+                        value={dateFrom}
+                        onChange={(e) => onDateFromChange(e.target.value)}
+                        className="bg-surface rounded-lg p-1.5 text-xs"
+                    />
+                </div>
+                <div className="flex flex-row gap-1 items-center">
+                    <label htmlFor="date-to" className="text-text/70">إلى:</label>
+                    <input
+                        type="date"
+                        id="date-to"
+                        value={dateTo}
+                        onChange={(e) => onDateToChange(e.target.value)}
+                        className="bg-surface rounded-lg p-1.5 text-xs"
+                    />
+                </div>
+                <label className="flex flex-row gap-1 items-center text-text/70 hover:cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={hasNotesOnly}
+                        onChange={(e) => onHasNotesOnlyChange(e.target.checked)}
+                        className="hover:cursor-pointer"
+                    />
+                    فقط مع ملاحظات
+                </label>
             </div>
 
             <button
@@ -72,7 +172,13 @@ const SearchBar = ({ onRecordAdded, formTarget, onFormTargetChange }: SearchBarP
                 onOpenChange={handleOpenChange}
                 title={titles[mode]}
             >
-                <form onSubmit={handleSubmit} className="flex flex-col gap-3 text-right" dir="rtl">
+                <form
+                    ref={formRef}
+                    onSubmit={handleSubmit}
+                    onKeyDown={handleFormKeyDown}
+                    className="flex flex-col gap-3 text-right"
+                    dir="rtl"
+                >
                     {errors.submit && (
                         <p className="text-red-500 text-xs text-center">{errors.submit}</p>
                     )}
@@ -80,6 +186,7 @@ const SearchBar = ({ onRecordAdded, formTarget, onFormTargetChange }: SearchBarP
                     <div>
                         <label className="text-sm text-text/70">اسم المريض *</label>
                         <input
+                            ref={firstFieldRef}
                             value={state.clientName}
                             onChange={(e) => setters.setClientName(e.target.value)}
                             className="w-full border border-border/40 rounded-lg p-2 text-sm"

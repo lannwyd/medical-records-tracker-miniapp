@@ -1,32 +1,42 @@
-import { Drawer } from "vaul"
+import { motion, AnimatePresence } from "framer-motion";
 import ClientDetails from "./ClientDetails"
 import Notes from "./Notes"
 import { MedicineInfo } from "./MedicineInfo"
 import { RecordDate } from "./RecordDate"
 import { Quantity } from "./Quantity"
-import State from "./State"
+import { RecordRow } from "../types";
 
-const ClientDrawer = () => {
+interface ClientDrawerProps {
+    record: RecordRow | null;
+    onClose: () => void;
+}
+
+const ClientDrawer = ({ record, onClose }: ClientDrawerProps) => {
     return (
-        <section className="w-full h-full flex-1 ">
-            <Drawer.Root direction="left" open={open}>
-                <Drawer.Portal>
-                    <Drawer.Content className="w-[33%] h-[87%] bg-bg flex flex-col items-center rounded-lg outline-none fixed top-22 left-0 gap-3  ">
-                        <State/>
-                        <div className="  flex flex-row w-[95%] justify-between ">
-                                <ClientDetails/>
-                                <div className="w-[38%] flex flex-col gap-2">
-                                    <RecordDate/>
-                                    <MedicineInfo/>
-                                    <Quantity/>
-                                </div>
+        <div className="h-full w-full overflow-hidden relative">
+            <AnimatePresence>
+                {record && (
+                    <motion.section
+                        initial={{ x: 300, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: 300, opacity: 0 }}
+                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                        className="h-full w-full bg-bg flex flex-col items-center shadow-shadow rounded-lg gap-3"
+                    >
+                        <div className="flex flex-row w-full  justify-between">
+                            <ClientDetails record={record} />
+                            <div className="w-[38%] flex flex-col gap-2">
+                                <RecordDate record={record} />
+                                <MedicineInfo record={record} />
+                                <Quantity record={record} />
+                            </div>
                         </div>
-                        
-                        <Notes/>
-                    </Drawer.Content>
-                </Drawer.Portal>
-            </Drawer.Root>
-        </section >
+
+                        <Notes record={record} />
+                    </motion.section>
+                )}
+            </AnimatePresence>
+        </div>
     )
 }
 
