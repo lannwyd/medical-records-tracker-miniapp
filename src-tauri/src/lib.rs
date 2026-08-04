@@ -8,24 +8,27 @@ use tauri::Manager;
 pub struct RecordRow {
     pub medication_id: i64,
     pub record_id: i64,
+    pub client_id: i64,
     pub date: String,
     pub client_name: String,
     pub client_adr: String,
+    pub notes: Option<String>,
     pub med_name: String,
     pub quantity: i64,
     pub doctor_name: String,
     pub doctor_adr: String,
-    pub notes: Option<String>,
 }
 
 #[derive(Deserialize)]
 pub struct AddRecordInput {
+    pub client_id: Option<i64>,   // Some(id) = duplicate flow, reuse existing client
+                                    // None = brand new client
     pub client_name: String,
     pub client_adr: Option<String>,
+    pub notes: Option<String>,
     pub date: String,
     pub doctor_name: Option<String>,
     pub doctor_adr: Option<String>,
-    pub notes: Option<String>,
     pub med_name: String,
     pub quantity: i64,
 }
@@ -47,7 +50,8 @@ fn init_db(app_handle: &tauri::AppHandle) -> Connection {
         CREATE TABLE IF NOT EXISTS clients (
             id      INTEGER PRIMARY KEY AUTOINCREMENT,
             name    TEXT NOT NULL,
-            adr     TEXT
+            adr     TEXT,
+            notes   TEXT
         );
         CREATE TABLE IF NOT EXISTS records (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,7 +59,6 @@ fn init_db(app_handle: &tauri::AppHandle) -> Connection {
             date        TEXT NOT NULL,
             doctor_name TEXT,
             doctor_adr  TEXT,
-            notes       TEXT,
             FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
         );
         CREATE TABLE IF NOT EXISTS medications (
@@ -69,7 +72,6 @@ fn init_db(app_handle: &tauri::AppHandle) -> Connection {
     )
     .expect("failed to create tables");
 
-    let _ = conn.execute("ALTER TABLE records ADD COLUMN notes TEXT", []);
     conn.execute("PRAGMA foreign_keys = ON", []).unwrap();
     conn
 }
@@ -81,7 +83,7 @@ fn get_records(state: tauri::State<DbConnection>) -> Result<Vec<RecordRow>, Stri
     let mut stmt = conn
         .prepare(
             "
-SELECT m.id, r.id, r.date, c.name, c.adr, m.name, m.quantity, r.doctor_name, r.doctor_adr, r.notes
+SELECT m.id, r.id, c.id, r.date, c.name, c.adr, c.notes, m.name, m.quantity, r.doctor_name, r.doctor_adr
 FROM records r
 JOIN clients c ON c.id = r.client_id
 JOIN medications m ON m.record_id = r.id
@@ -95,14 +97,15 @@ ORDER BY r.date DESC
             Ok(RecordRow {
                 medication_id: row.get(0)?,
                 record_id: row.get(1)?,
-                date: row.get(2)?,
-                client_name: row.get(3)?,
-                client_adr: row.get(4)?,
-                med_name: row.get(5)?,
-                quantity: row.get(6)?,
-                doctor_name: row.get(7)?,
-                doctor_adr: row.get(8)?,
-                notes: row.get(9)?,
+                client_id: row.get(2)?,
+                date: row.get(3)?,
+                client_name: row.get(4)?,
+                client_adr: row.get(5)?,
+                notes: row.get(6)?,
+                med_name: row.get(7)?,
+                quantity: row.get(8)?,
+                doctor_name: row.get(9)?,
+                doctor_adr: row.get(10)?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -114,25 +117,31 @@ ORDER BY r.date DESC
 #[tauri::command]
 fn add_record(payload: AddRecordInput, state: tauri::State<DbConnection>) -> Result<(), String> {
     let mut conn = state.0.lock().map_err(|e| e.to_string())?;
-
     let tx = conn.transaction().map_err(|e| e.to_string())?;
 
-    tx.execute(
-        "INSERT INTO clients (name, adr) VALUES (?1, ?2)",
-        params![payload.client_name, payload.client_adr],
-    )
-    .map_err(|e| e.to_string())?;
-    let client_id = tx.last_insert_rowid();
+    let client_id = match payload.client_id {
+        Some(id) => {
+            // Duplicate flow: same client, just refresh their note in case it was edited
+            tx.execute(
+                "UPDATE clients SET notes = ?1 WHERE id = ?2",
+                params![payload.notes, id],
+            )
+            .map_err(|e| e.to_string())?;
+            id
+        }
+        None => {
+            tx.execute(
+                "INSERT INTO clients (name, adr, notes) VALUES (?1, ?2, ?3)",
+                params![payload.client_name, payload.client_adr, payload.notes],
+            )
+            .map_err(|e| e.to_string())?;
+            tx.last_insert_rowid()
+        }
+    };
 
     tx.execute(
-        "INSERT INTO records (client_id, date, doctor_name, doctor_adr, notes) VALUES (?1, ?2, ?3, ?4, ?5)",
-        params![
-            client_id,
-            payload.date,
-            payload.doctor_name,
-            payload.doctor_adr,
-            payload.notes
-        ],
+        "INSERT INTO records (client_id, date, doctor_name, doctor_adr) VALUES (?1, ?2, ?3, ?4)",
+        params![client_id, payload.date, payload.doctor_name, payload.doctor_adr],
     )
     .map_err(|e| e.to_string())?;
     let record_id = tx.last_insert_rowid();
@@ -160,10 +169,10 @@ pub struct UpdateRecordInput {
     pub record_id: i64,
     pub client_name: String,
     pub client_adr: Option<String>,
+    pub notes: Option<String>,
     pub date: String,
     pub doctor_name: Option<String>,
     pub doctor_adr: Option<String>,
-    pub notes: Option<String>,
     pub med_name: String,
     pub quantity: i64,
 }
@@ -182,20 +191,14 @@ fn update_record(payload: UpdateRecordInput, state: tauri::State<DbConnection>) 
         .map_err(|e| e.to_string())?;
 
     tx.execute(
-        "UPDATE clients SET name = ?1, adr = ?2 WHERE id = ?3",
-        params![payload.client_name, payload.client_adr, client_id],
+        "UPDATE clients SET name = ?1, adr = ?2, notes = ?3 WHERE id = ?4",
+        params![payload.client_name, payload.client_adr, payload.notes, client_id],
     )
     .map_err(|e| e.to_string())?;
 
     tx.execute(
-        "UPDATE records SET date = ?1, doctor_name = ?2, doctor_adr = ?3, notes = ?4 WHERE id = ?5",
-        params![
-            payload.date,
-            payload.doctor_name,
-            payload.doctor_adr,
-            payload.notes,
-            payload.record_id
-        ],
+        "UPDATE records SET date = ?1, doctor_name = ?2, doctor_adr = ?3 WHERE id = ?4",
+        params![payload.date, payload.doctor_name, payload.doctor_adr, payload.record_id],
     )
     .map_err(|e| e.to_string())?;
 

@@ -39,8 +39,7 @@ const ClientsList = ({ records, loading, error, onDelete, onEdit, onDuplicate, o
                         onEdit={onEdit}
                         onDuplicate={onDuplicate}
                         onSelect={onSelect}
-                        isSelected={record.record_id === selectedId}
-                    />
+                        isSelected={record.medication_id === selectedId} />
                 ))}
             </div>
         </section>

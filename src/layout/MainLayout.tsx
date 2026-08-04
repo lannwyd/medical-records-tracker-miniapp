@@ -11,7 +11,6 @@ const MainLayout = () => {
     const { records, loading, error, refetch, deleteRecord } = useRecords();
     const [formTarget, setFormTarget] = useState<FormTarget>(null);
     const [selectedId, setSelectedId] = useState<number | null>(null);
-
     const [searchQuery, setSearchQuery] = useState("");
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
@@ -29,9 +28,7 @@ const MainLayout = () => {
         });
     }, [records, searchQuery, dateFrom, dateTo, hasNotesOnly]);
 
-    const selectedRecord = records.find((r) => r.record_id === selectedId) ?? null;
-
-    return (
+const selectedRecord = records.find((r) => r.medication_id === selectedId) ?? null;    return (
         <div className="w-full h-full flex flex-col  gap-3 min-h-0  ">
             <SearchBar
                 onRecordAdded={refetch}
@@ -55,7 +52,7 @@ const MainLayout = () => {
                     onDelete={deleteRecord}
                     onEdit={(record) => setFormTarget({ mode: "edit", record })}
                     onDuplicate={(record) => setFormTarget({ mode: "duplicate", record })}
-                    onSelect={(record) => setSelectedId(record.record_id)}
+                    onSelect={(record) => setSelectedId(record.medication_id)}
                     selectedId={selectedId}
                 />
                 <ClientDrawer record={selectedRecord} onClose={() => setSelectedId(null)} />

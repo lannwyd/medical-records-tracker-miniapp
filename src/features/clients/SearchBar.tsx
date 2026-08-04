@@ -34,6 +34,10 @@ const SearchBar = ({
     const searchInputRef = useRef<HTMLInputElement>(null);
     const formRef = useRef<HTMLFormElement>(null);
     const firstFieldRef = useRef<HTMLInputElement>(null);
+    const doctorNameRef = useRef<HTMLInputElement>(null);
+    const mode = formTarget?.mode ?? "add";
+    const isDuplicate = mode === "duplicate";
+    const initialData = mode === "edit" || mode === "duplicate" ? formTarget?.record : null;
 
     useEffect(() => {
         if (formTarget) setDialogOpen(true);
@@ -41,10 +45,16 @@ const SearchBar = ({
 
     useEffect(() => {
         if (dialogOpen) {
-            const timer = setTimeout(() => firstFieldRef.current?.focus(), 0);
+            const timer = setTimeout(() => {
+                if (isDuplicate) {
+                    doctorNameRef.current?.focus();
+                } else {
+                    firstFieldRef.current?.focus();
+                }
+            }, 0);
             return () => clearTimeout(timer);
         }
-    }, [dialogOpen]);
+    }, [dialogOpen, isDuplicate]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -60,9 +70,8 @@ const SearchBar = ({
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [dialogOpen]);
+    const titles = { add: "إضافة مريض", edit: "تعديل السجل", duplicate: "نسخ السجل" };
 
-    const mode = formTarget?.mode ?? "add";
-    const initialData = mode === "edit" || mode === "duplicate" ? formTarget?.record : null;
 
     const {
         state,
@@ -90,8 +99,6 @@ const SearchBar = ({
         if (!open) onFormTargetChange(null);
     };
 
-    // Enter moves focus to the next field instead of submitting,
-    // except inside textarea (keep newline behavior) and on the submit button itself
     const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
         if (e.key !== "Enter") return;
         const target = e.target as HTMLElement;
@@ -109,7 +116,6 @@ const SearchBar = ({
         next?.focus();
     };
 
-    const titles = { add: "إضافة مريض", edit: "تعديل السجل", duplicate: "نسخ السجل" };
 
     return (
         <section className="w-full min-h-16 flex flex-row justify-between items-center bg-panel border-border/40 border shadow-lg/10 shadow-shadow rounded-xl px-4 gap-4">
@@ -188,7 +194,8 @@ const SearchBar = ({
                             ref={firstFieldRef}
                             value={state.clientName}
                             onChange={(e) => setters.setClientName(e.target.value)}
-                            className="w-full border border-border/40 rounded-lg p-2 text-sm"
+                            readOnly={isDuplicate}
+                            className={`w-full border border-border/40 rounded-lg p-2 text-sm ${isDuplicate ? "bg-gray-100 text-text/60" : ""}`}
                         />
                         {errors.client_name && (
                             <p className="text-red-500 text-xs mt-0.5">{errors.client_name}</p>
@@ -196,13 +203,15 @@ const SearchBar = ({
                     </div>
 
                     <div>
-                        <label className="text-sm text-text/70">العنوان*</label>
+                        <label className="text-sm text-text/70">العنوان</label>
                         <input
                             value={state.clientAdr}
                             onChange={(e) => setters.setClientAdr(e.target.value)}
-                            className="w-full border border-border/40 rounded-lg p-2 text-sm"
+                            readOnly={isDuplicate}
+                            className={`w-full border border-border/40 rounded-lg p-2 text-sm ${isDuplicate ? "bg-gray-100 text-text/60" : ""}`}
                         />
                     </div>
+
 
                     <div>
                         <label className="text-sm text-text/70">التاريخ *</label>
@@ -220,6 +229,7 @@ const SearchBar = ({
                     <div>
                         <label className="text-sm text-text/70">الطبيب*</label>
                         <input
+                            ref={doctorNameRef}
                             value={state.doctorName}
                             onChange={(e) => setters.setDoctorName(e.target.value)}
                             className="w-full border border-border/40 rounded-lg p-2 text-sm"
@@ -236,7 +246,7 @@ const SearchBar = ({
                     </div>
 
                     <div>
-                        <label className="text-sm text-text/70">ملاحظات*</label>
+                        <label className="text-sm text-text/70">ملاحظات</label>
                         <textarea
                             rows={2}
                             value={state.notes}
@@ -260,7 +270,7 @@ const SearchBar = ({
                                 onChange={(e) => setters.setMedName(e.target.value)}
                                 className="col-span-3 border border-border/40 rounded-lg p-2 text-sm"
                             />
-                            <label htmlFor="" className="col-span-1 text-left rounded-lg p-2 text-sm">الكمية*</label>
+                            <label className="col-span-1 text-left rounded-lg p-2 text-sm">الكمية*</label>
                             <input
                                 type="number"
                                 value={state.quantity}

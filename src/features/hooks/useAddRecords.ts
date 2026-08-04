@@ -15,10 +15,10 @@ export const useAddRecord = (
 
     const [clientName, setClientName] = useState("");
     const [clientAdr, setClientAdr] = useState("");
+    const [notes, setNotes] = useState("");
     const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
     const [doctorName, setDoctorName] = useState("");
     const [doctorAdr, setDoctorAdr] = useState("");
-    const [notes, setNotes] = useState("");
     const [medName, setMedName] = useState("");
     const [quantity, setQuantity] = useState(1);
 
@@ -26,25 +26,25 @@ export const useAddRecord = (
         if (initialData) {
             setClientName(initialData.client_name);
             setClientAdr(initialData.client_adr ?? "");
-            setDate(initialData.date);
+            setNotes(initialData.notes ?? "");
             setDoctorName(initialData.doctor_name ?? "");
             setDoctorAdr(initialData.doctor_adr ?? "");
-            setNotes(initialData.notes ?? "");
             setMedName(initialData.med_name);
             setQuantity(initialData.quantity);
+            setDate(mode === "duplicate" ? new Date().toISOString().split("T")[0] : initialData.date);
         } else {
             resetForm();
         }
         setErrors({});
-    }, [initialData]);
+    }, [initialData, mode]);
 
     const resetForm = () => {
         setClientName("");
         setClientAdr("");
+        setNotes("");
         setDate(new Date().toISOString().split("T")[0]);
         setDoctorName("");
         setDoctorAdr("");
-        setNotes("");
         setMedName("");
         setQuantity(1);
         setErrors({});
@@ -54,12 +54,13 @@ export const useAddRecord = (
         setErrors({});
 
         const rawData: ClientFormData = {
+            client_id: mode === "duplicate" && initialData ? initialData.client_id : undefined,
             client_name: clientName,
             client_adr: clientAdr,
+            notes,
             date,
             doctor_name: doctorName,
             doctor_adr: doctorAdr,
-            notes,
             med_name: medName,
             quantity,
         };
@@ -96,8 +97,8 @@ export const useAddRecord = (
     };
 
     return {
-        state: { clientName, clientAdr, date, doctorName, doctorAdr, notes, medName, quantity },
-        setters: { setClientName, setClientAdr, setDate, setDoctorName, setDoctorAdr, setNotes, setMedName, setQuantity },
+        state: { clientName, clientAdr, notes, date, doctorName, doctorAdr, medName, quantity },
+        setters: { setClientName, setClientAdr, setNotes, setDate, setDoctorName, setDoctorAdr, setMedName, setQuantity },
         loading,
         errors,
         submitForm,

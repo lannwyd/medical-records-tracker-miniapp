@@ -8,12 +8,13 @@ export const medicationSchema = z.object({
 
 
 export const clientFormSchema = z.object({
+    client_id: z.number().optional(),
     client_name: z.string().min(1, "اسم المريض مطلوب"),
     client_adr: z.string().optional(),
+    notes: z.string().optional(),
     date: z.string().min(1, "التاريخ مطلوب"),
     doctor_name: z.string().optional(),
     doctor_adr: z.string().optional(),
-    notes: z.string().optional(),
     med_name: z.string().min(1, "اسم الدواء مطلوب"),
     quantity: z.coerce.number().min(1, "الكمية يجب أن تكون 1 على الأقل"),
 });
