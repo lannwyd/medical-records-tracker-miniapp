@@ -69,7 +69,10 @@ const SearchBar = ({
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
+    
+    
     }, [dialogOpen]);
+
     const titles = { add: "إضافة مريض", edit: "تعديل السجل", duplicate: "نسخ السجل" };
 
 
@@ -100,21 +103,22 @@ const SearchBar = ({
     };
 
     const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
-        if (e.key !== "Enter") return;
-        const target = e.target as HTMLElement;
+    if (e.key !== "Enter") return;
+    const target = e.target as HTMLElement;
 
-        if (target.tagName === "TEXTAREA") return;
-        if (target instanceof HTMLButtonElement && target.type === "submit") return;
+    if (target.tagName === "TEXTAREA" && e.shiftKey) return;
 
-        e.preventDefault();
+    if (target instanceof HTMLButtonElement && target.type === "submit") return;
 
-        const focusable = Array.from(
-            formRef.current?.querySelectorAll<HTMLElement>("input, textarea, select, button[type='submit']") ?? []
-        );
-        const currentIndex = focusable.indexOf(target);
-        const next = focusable[currentIndex + 1];
-        next?.focus();
-    };
+    e.preventDefault();
+
+    const focusable = Array.from(
+        formRef.current?.querySelectorAll<HTMLElement>("input, textarea, select, button[type='submit']") ?? []
+    );
+    const currentIndex = focusable.indexOf(target);
+    const next = focusable[currentIndex + 1];
+    next?.focus();
+};
 
 
     return (
