@@ -55,7 +55,7 @@ const selectedRecord = records.find((r) => r.medication_id === selectedId) ?? nu
                     onSelect={(record) => setSelectedId(record.medication_id)}
                     selectedId={selectedId}
                 />
-                <ClientDrawer record={selectedRecord} onClose={() => setSelectedId(null)} />
+                <ClientDrawer record={selectedRecord}  />
             </div>
         </div >
     )
